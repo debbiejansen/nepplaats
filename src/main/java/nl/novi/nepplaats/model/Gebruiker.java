@@ -9,7 +9,7 @@ public class Gebruiker {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long userId;
+    private Long gebruikerId;
 
     @Column(name = "gebruikersnaam", unique = true, nullable = false)
     private String gebruikersnaam;
@@ -37,12 +37,12 @@ public class Gebruiker {
     }
 
     // Getters en Setters
-    public Long getUserId() {
-        return userId;
+    public Long getGebruikerId() {
+        return gebruikerId;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setGebruikerId(Long gebruikerId) {
+        this.gebruikerId = gebruikerId;
     }
 
     public String getGebruikersnaam() {
