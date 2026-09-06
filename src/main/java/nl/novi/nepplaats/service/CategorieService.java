@@ -1,6 +1,7 @@
 package nl.novi.nepplaats.service;
 
 import nl.novi.nepplaats.dto.categorie.CategorieDto;
+import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.Categorie;
 import nl.novi.nepplaats.repository.CategorieRepository;
 import org.springframework.stereotype.Service;
@@ -40,6 +41,29 @@ public class CategorieService {
         // Zet het opgeslagen resultaat weer om naar een DTO om terug te sturen
         return transferToDto(savedCategorie);
     }
+
+    // Bestaande categorie aanpassen
+    public CategorieDto updateCategory(Long id, CategorieDto inputDto) {
+        // 1. Zoek de bestaande entiteit op in de database via de repository
+        Categorie existingCategorie = categorieRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Categorie met ID " + id + " niet gevonden"));
+
+        // 2. Pas de velden aan met de waarden uit het binnenkomende DTO
+        if (inputDto.getCategorieNaam() != null) {
+            existingCategorie.setCategorieNaam(inputDto.getCategorieNaam());
+        }
+        if (inputDto.getCategorieBeschrijving() != null) {
+            existingCategorie.setCategorieBeschrijving(inputDto.getCategorieBeschrijving());
+        }
+
+        // 3. Sla de gewijzigde entiteit op
+        Categorie updatedCategorie = categorieRepository.save(existingCategorie);
+
+        // 4. Zet om naar DTO en stuur terug
+        return transferToDto(updatedCategorie);
+    }
+
+
 
     // Helper methode: Entiteit -> DTO
     private CategorieDto transferToDto(Categorie categorie) {

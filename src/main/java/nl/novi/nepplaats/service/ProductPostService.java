@@ -1,12 +1,17 @@
 package nl.novi.nepplaats.service;
 
 import nl.novi.nepplaats.dto.productpost.ProductPostDto;
+import nl.novi.nepplaats.model.Categorie;
+import nl.novi.nepplaats.model.Gebruiker;
 import nl.novi.nepplaats.model.ProductPost;
+import nl.novi.nepplaats.model.Status;
+import nl.novi.nepplaats.repository.CategorieRepository;
+import nl.novi.nepplaats.repository.GebruikerRepository;
 import nl.novi.nepplaats.repository.ProductPostRepository;
+import nl.novi.nepplaats.repository.StatusRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,18 +19,27 @@ import java.util.List;
 public class ProductPostService {
 
     private final ProductPostRepository repository;
+    private final GebruikerRepository gebruikerRepository;
+    private final CategorieRepository categorieRepository;
+    private final StatusRepository statusRepository;
 
-    public ProductPostService(ProductPostRepository repository) {
+    public ProductPostService(ProductPostRepository repository,
+                              GebruikerRepository gebruikerRepository,
+                              CategorieRepository categorieRepository,
+                              StatusRepository statusRepository) {
         this.repository = repository;
+        this.gebruikerRepository = gebruikerRepository;
+        this.categorieRepository = categorieRepository;
+        this.statusRepository = statusRepository;
     }
 
     public List<ProductPostDto.Response> getAllPosts(Long categorieId, Long statusId, BigDecimal maxPrijs) {
         List<ProductPost> posts;
 
         if (categorieId != null) {
-            posts = repository.findByCategorieId(categorieId);
+            posts = repository.findByCategorieCategorieId(categorieId);// posts = repository.findByCategorieCategorieId(categorieId);
         } else if (statusId != null) {
-            posts = repository.findByStatusId(statusId);
+            posts = repository.findByStatusStatusId(statusId);
         } else if (maxPrijs != null) {
             posts = repository.findByPrijsLessThanEqual(maxPrijs);
         } else {
@@ -55,13 +69,37 @@ public class ProductPostService {
         ProductPost existing = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("ProductPost niet gevonden met id: " + id));
 
-        existing.setTitel(dto.getTitel());
-        existing.setBeschrijving(dto.getBeschrijving());
-        existing.setPrijs(dto.getPrijs());
-        existing.setAfbeelding(dto.getAfbeelding());
-        existing.setPosterId(dto.getPosterId());
-        existing.setCategorieId(dto.getCategorieId());
-        existing.setStatusId(dto.getStatusId());
+        // Update alleen als het veld is meegegeven in de request
+        if (dto.getTitel() != null) {
+            existing.setTitel(dto.getTitel());
+        }
+        if (dto.getBeschrijving() != null) {
+            existing.setBeschrijving(dto.getBeschrijving());
+        }
+        if (dto.getPrijs() != null) {
+            existing.setPrijs(dto.getPrijs());
+        }
+        if (dto.getAfbeelding() != null) {
+            existing.setAfbeelding(dto.getAfbeelding());
+        }
+
+        // relaties
+        if (dto.getPosterId() != null) {
+            Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
+                    .orElseThrow(() -> new RuntimeException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
+            existing.setPoster(poster);
+        }
+        if (dto.getCategorieId() != null) {
+            Categorie categorie = categorieRepository.findById(dto.getCategorieId())
+                    .orElseThrow(() -> new RuntimeException("Categorie niet gevonden met id: " + dto.getCategorieId()));
+            existing.setCategorie(categorie);
+        }
+
+        if (dto.getStatusId() != null) {
+            Status status = statusRepository.findById(dto.getStatusId())
+                    .orElseThrow(() -> new RuntimeException("Status niet gevonden met id: " + dto.getStatusId()));
+            existing.setStatus(status);
+        }
 
         ProductPost updated = repository.save(existing);
         return toResponseDto(updated);
@@ -83,9 +121,19 @@ public class ProductPostService {
         dto.setPrijs(entity.getPrijs());
         dto.setAfbeelding(entity.getAfbeelding());
         dto.setPostDate(entity.getPostDate());
-        dto.setPosterId(entity.getPosterId());
-        dto.setCategorieId(entity.getCategorieId());
-        dto.setStatusId(entity.getStatusId());
+
+        // null checks
+        if (entity.getPoster() != null) {
+            dto.setPosterId(entity.getPoster().getGebruikerId());
+        }
+
+        if (entity.getCategorie() != null) {
+            dto.setCategorieId(entity.getCategorie().getCategorieId());
+        }
+        if (entity.getStatus() != null) {
+            dto.setStatusId(entity.getStatus().getStatusId());
+        }
+
         return dto;
     }
 
@@ -95,10 +143,26 @@ public class ProductPostService {
         post.setBeschrijving(dto.getBeschrijving());
         post.setPrijs(dto.getPrijs());
         post.setAfbeelding(dto.getAfbeelding());
-        post.setPosterId(dto.getPosterId());
-        post.setCategorieId(dto.getCategorieId());
-        post.setStatusId(dto.getStatusId());
+
+        // Fetch and SET poster
+        Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
+                .orElseThrow(() -> new RuntimeException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
+        post.setPoster(poster);
+
+        // Fetch and SET categorie
+        if (dto.getCategorieId() != null) {
+            Categorie categorie = categorieRepository.findById(dto.getCategorieId())
+                    .orElseThrow(() -> new RuntimeException("Categorie niet gevonden met id: " + dto.getCategorieId()));
+            post.setCategorie(categorie);
+        }
+
+        // Fetch and SET status
+        if (dto.getStatusId() != null) {
+            Status status = statusRepository.findById(dto.getStatusId())
+                    .orElseThrow(() -> new RuntimeException("Status niet gevonden met id: " + dto.getStatusId()));
+            post.setStatus(status);
+        }
+
         return post;
     }
-
 }

@@ -32,4 +32,11 @@ public class CategorieController {
         CategorieDto createdCategory = categorieService.createCategory(newCategoryDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
     }
+
+    // PUT: Bestaande categorie aanpassen op basis van ID
+    @PutMapping("/{id}")
+    public ResponseEntity<CategorieDto> updateCategory(@PathVariable Long id, @RequestBody CategorieDto categoryDto) {
+        CategorieDto updatedCategory = categorieService.updateCategory(id, categoryDto);
+        return ResponseEntity.ok(updatedCategory);
+    }
 }

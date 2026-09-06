@@ -30,95 +30,54 @@ public class ProductPost {
     @Column(name = "post_date", updatable = false)
     private LocalDateTime postDate;
 
-    @Column(name = "poster_id", nullable = false)
-    private Long posterId;
+    // relaties
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "poster_id", nullable = false)
+    private Gebruiker poster;
 
-    @Column(name = "categorie_id")
-    private Long categorieId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categorie_id")
+    private Categorie categorie;
 
-    @Column(name = "status_id")
-    private Long statusId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "status_id")
+    private Status status;
 
     // Standaard constructors
     public ProductPost() {
     }
 
-    public ProductPost(String titel, BigDecimal prijs, Long posterId) {
+    public ProductPost(String titel, BigDecimal prijs, Gebruiker poster) {
         this.titel = titel;
         this.prijs = prijs;
-        this.posterId = posterId;
+        this.poster = poster;
     }
 
     // Getters en Setters
-    public Long getProductPostId() {
-        return productPostId;
-    }
+    public Long getProductPostId() { return productPostId; }
+    public void setProductPostId(Long productPostId) { this.productPostId = productPostId; }
 
-    public void setProductPostId(Long productPostId) {
-        this.productPostId = productPostId;
-    }
+    public String getTitel() { return titel; }
+    public void setTitel(String titel) { this.titel = titel; }
 
-    public String getTitel() {
-        return titel;
-    }
+    public String getBeschrijving() { return beschrijving; }
+    public void setBeschrijving(String beschrijving) { this.beschrijving = beschrijving; }
 
-    public void setTitel(String titel) {
-        this.titel = titel;
-    }
+    public BigDecimal getPrijs() { return prijs; }
+    public void setPrijs(BigDecimal prijs) { this.prijs = prijs; }
 
-    public String getBeschrijving() {
-        return beschrijving;
-    }
+    public String getAfbeelding() { return afbeelding; }
+    public void setAfbeelding(String afbeelding) { this.afbeelding = afbeelding; }
 
-    public void setBeschrijving(String beschrijving) {
-        this.beschrijving = beschrijving;
-    }
+    public LocalDateTime getPostDate() { return postDate; }
+    public void setPostDate(LocalDateTime postDate) { this.postDate = postDate; }
 
-    public BigDecimal getPrijs() {
-        return prijs;
-    }
+    public Gebruiker getPoster() { return poster; }
+    public void setPoster(Gebruiker poster) { this.poster = poster; }
 
-    public void setPrijs(BigDecimal prijs) {
-        this.prijs = prijs;
-    }
+    public Categorie getCategorie() { return categorie; }
+    public void setCategorie(Categorie categorie) { this.categorie = categorie; }
 
-    public String getAfbeelding() {
-        return afbeelding;
-    }
-
-    public void setAfbeelding(String afbeelding) {
-        this.afbeelding = afbeelding;
-    }
-
-    public LocalDateTime getPostDate() {
-        return postDate;
-    }
-
-    public void setPostDate(LocalDateTime postDate) {
-        this.postDate = postDate;
-    }
-
-    public Long getPosterId() {
-        return posterId;
-    }
-
-    public void setPosterId(Long posterId) {
-        this.posterId = posterId;
-    }
-
-    public Long getCategorieId() {
-        return categorieId;
-    }
-
-    public void setCategorieId(Long categorieId) {
-        this.categorieId = categorieId;
-    }
-
-    public Long getStatusId() {
-        return statusId;
-    }
-
-    public void setStatusId(Long statusId) {
-        this.statusId = statusId;
-    }
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) { this.status = status; }
 }
