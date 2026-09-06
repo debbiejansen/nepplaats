@@ -1,49 +1,42 @@
 package nl.novi.nepplaats.controller;
 
 import nl.novi.nepplaats.dto.categorie.CategorieDto;
+import nl.novi.nepplaats.service.CategorieService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("api/categories")
-
+@RequestMapping("api/categorieen")
 public class CategorieController {
 
-    // nep database voor categorieen
-    private static final List<CategorieDto> mockCategories = new ArrayList<>();
-    private static int categoryIdCounter = 4;
+    private final CategorieService categorieService;
 
-    // Categorieen toevoegen
-    static {
-        mockCategories.add(new CategorieDto(1, "Elektronica", "Apparaten en gadgets"));
-        mockCategories.add(new CategorieDto(2, "Kleding", "Kledingstukken voor alle leeftijden"));
-        mockCategories.add(new CategorieDto(3, "Boeken", "Leesboeken, studieboeken en strips"));
+    // Injecteer de Service via de constructor
+    public CategorieController(CategorieService categorieService) {
+        this.categorieService = categorieService;
     }
 
-    // GET: Alle categorieen ophalen
+    // GET: Alle categorieën ophalen
     @GetMapping("/getAll")
     public ResponseEntity<List<CategorieDto>> getAllCategories() {
-        return ResponseEntity.ok(mockCategories);
+        List<CategorieDto> categories = categorieService.getAllCategories();
+        return ResponseEntity.ok(categories);
     }
 
     // POST: Nieuwe categorie toevoegen
     @PostMapping("/create")
-    public ResponseEntity<?> createCategory(@RequestBody CategorieDto newCategory) {
-        // Check of de naam al bestaat
-        for (CategorieDto cat : mockCategories) {
-            if (cat.getCategorieNaam().equalsIgnoreCase(newCategory.getCategorieNaam())) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Categorie met deze naam bestaat al");
-            }
-        }
+    public ResponseEntity<CategorieDto> createCategory(@RequestBody CategorieDto newCategoryDto) {
+        CategorieDto createdCategory = categorieService.createCategory(newCategoryDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
+    }
 
-        // Genereer ID en voeg toe
-        newCategory.setCategorieId(categoryIdCounter++);
-        mockCategories.add(newCategory);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(newCategory);
+    // PUT: Bestaande categorie aanpassen op basis van ID
+    @PutMapping("/{id}")
+    public ResponseEntity<CategorieDto> updateCategory(@PathVariable Long id, @RequestBody CategorieDto categoryDto) {
+        CategorieDto updatedCategory = categorieService.updateCategory(id, categoryDto);
+        return ResponseEntity.ok(updatedCategory);
     }
 }
