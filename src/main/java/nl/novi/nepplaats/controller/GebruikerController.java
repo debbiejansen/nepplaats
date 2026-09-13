@@ -1,5 +1,6 @@
 package nl.novi.nepplaats.controller;
 
+import jakarta.validation.Valid;
 import nl.novi.nepplaats.dto.gebruiker.GebruikerDto;
 import nl.novi.nepplaats.service.GebruikerService;
 import org.springframework.http.HttpStatus;
@@ -32,14 +33,14 @@ public class GebruikerController {
 
     // POST: Nieuwe gebruiker toevoegen
     @PostMapping
-    public ResponseEntity<GebruikerDto.Response> createGebruiker(@RequestBody GebruikerDto.Request gebruikerDto) {
+    public ResponseEntity<GebruikerDto.Response> createGebruiker(@Valid @RequestBody GebruikerDto.Request gebruikerDto) {
         GebruikerDto.Response created = gebruikerService.createGebruiker(gebruikerDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // PUT: Gegevens wijzigen
     @PutMapping("/{id}")
-    public ResponseEntity<GebruikerDto.Response> updateGebruiker(@PathVariable Long id, @RequestBody GebruikerDto.Request gebruikerDto) {
+    public ResponseEntity<GebruikerDto.Response> updateGebruiker(@PathVariable Long id, @Valid @RequestBody GebruikerDto.Request gebruikerDto) {
         return ResponseEntity.ok(gebruikerService.updateGebruiker(id, gebruikerDto));
     }
 
