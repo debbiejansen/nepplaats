@@ -20,23 +20,33 @@ public class CategorieController {
     }
 
     // GET: Alle categorieën ophalen
-    @GetMapping("/getAll")
+    @GetMapping
     public ResponseEntity<List<CategorieDto>> getAllCategories() {
-        List<CategorieDto> categories = categorieService.getAllCategories();
-        return ResponseEntity.ok(categories);
+        return ResponseEntity.ok(categorieService.getAllCategories());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CategorieDto> getCategoryById(@PathVariable Long id) {
+        return ResponseEntity.ok(categorieService.getCategoryById(id));
     }
 
     // POST: Nieuwe categorie toevoegen
-    @PostMapping("/create")
-    public ResponseEntity<CategorieDto> createCategory(@RequestBody CategorieDto newCategoryDto) {
-        CategorieDto createdCategory = categorieService.createCategory(newCategoryDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
+    @PostMapping
+    public ResponseEntity<CategorieDto> createCategory(@RequestBody CategorieDto categoryDto) {
+        CategorieDto created = categorieService.createCategory(categoryDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // PUT: Bestaande categorie aanpassen op basis van ID
     @PutMapping("/{id}")
     public ResponseEntity<CategorieDto> updateCategory(@PathVariable Long id, @RequestBody CategorieDto categoryDto) {
-        CategorieDto updatedCategory = categorieService.updateCategory(id, categoryDto);
-        return ResponseEntity.ok(updatedCategory);
+        return ResponseEntity.ok(categorieService.updateCategory(id, categoryDto));
+    }
+
+    // DELETE: Bestaande categorie verwijderen op basis van ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        categorieService.deleteCategory(id);
+        return ResponseEntity.noContent().build();
     }
 }

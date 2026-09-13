@@ -19,22 +19,34 @@ public class StatusController {
         this.statusService = statusService;
     }
 
+    // GET: Gegevens ophalen
     @GetMapping
     public ResponseEntity<List<StatusDto>> getAllStatussen() {
-        List<StatusDto> dtos = statusService.getAllStatussen();
-        return ResponseEntity.ok(dtos);
+        return ResponseEntity.ok(statusService.getAllStatussen());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<StatusDto> getStatusById(@PathVariable Long id) {
-        StatusDto dto = statusService.getStatusById(id);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(statusService.getStatusById(id));
     }
 
-    @PostMapping("/create")
+    // POST: Gegevens sturen/aanmaken
+    @PostMapping
     public ResponseEntity<StatusDto> createStatus(@RequestBody StatusDto statusDto) {
-        StatusDto createdStatus = statusService.createStatus(statusDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdStatus);
+        StatusDto created = statusService.createStatus(statusDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    // PUT: Gegevens updaten
+    @PutMapping("/{id}")
+    public ResponseEntity<StatusDto> updateStatus(@PathVariable Long id, @RequestBody StatusDto statusDto) {
+        return ResponseEntity.ok(statusService.updateStatus(id, statusDto));
+    }
+
+    // DELETE: Gegevens verwijderen
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteStatus(@PathVariable Long id) {
+        statusService.deleteStatus(id);
+        return ResponseEntity.noContent().build();
+    }
 }

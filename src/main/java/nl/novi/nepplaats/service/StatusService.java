@@ -41,6 +41,24 @@ public class StatusService {
         return transferToDto(savedStatus);
     }
 
+    public StatusDto updateStatus(Long id, StatusDto newStatus) {
+        Status status = statusRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Status niet gevonden met id: " + id));
+
+        status.setStatusNaam(newStatus.getStatusNaam());
+        status.setStatusBeschrijving(newStatus.getStatusBeschrijving());
+
+        Status updatedStatus = statusRepository.save(status);
+        return transferToDto(updatedStatus);
+    }
+
+    public void deleteStatus(Long id) {
+        if (!statusRepository.existsById(id)) {
+            throw new RuntimeException("Status niet gevonden met id: " + id);
+        }
+        statusRepository.deleteById(id);
+    }
+
     // Helper methode: DTO -> Entiteit
     private Status transferToEntity(StatusDto dto) {
         Status status = new Status();
