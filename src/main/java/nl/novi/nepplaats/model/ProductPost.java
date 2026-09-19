@@ -23,8 +23,9 @@ public class ProductPost {
     @Column(name = "prijs", nullable = false)
     private BigDecimal prijs;
 
-    @Column(name = "afbeelding")
-    private String afbeelding;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "afbeelding_id")
+    private Afbeelding afbeelding;
 
     @CreationTimestamp
     @Column(name = "post_date", updatable = false)
@@ -66,8 +67,8 @@ public class ProductPost {
     public BigDecimal getPrijs() { return prijs; }
     public void setPrijs(BigDecimal prijs) { this.prijs = prijs; }
 
-    public String getAfbeelding() { return afbeelding; }
-    public void setAfbeelding(String afbeelding) { this.afbeelding = afbeelding; }
+    public Afbeelding getAfbeelding() { return afbeelding; }
+    public void setAfbeelding(Afbeelding afbeelding) { this.afbeelding = afbeelding; }
 
     public LocalDateTime getPostDate() { return postDate; }
     public void setPostDate(LocalDateTime postDate) { this.postDate = postDate; }

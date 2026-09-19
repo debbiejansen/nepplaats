@@ -1,6 +1,7 @@
 package nl.novi.nepplaats.service;
 
 import nl.novi.nepplaats.dto.rol.RolDto;
+import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.Rol;
 import nl.novi.nepplaats.repository.RolRepository;
 import org.springframework.stereotype.Service;
@@ -28,16 +29,40 @@ public class RolService {
         return rolDtos;
     }
 
+    // Haal één specifieke rol op op basis van ID
+    public RolDto getRolById(Long id) {
+        Rol rol = rolRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Rol niet gevonden met id: " + id));
+        return transferToDto(rol);
+    }
+
     // Maak een nieuwe rol aan
     public RolDto createRol(RolDto rolDto) {
-        // Zet DTO om naar Entiteit
         Rol rol = transferToEntity(rolDto);
-
-        // Sla de entiteit op in de database via de repository
         Rol savedRol = rolRepository.save(rol);
-
-        // Zet het opgeslagen resultaat weer om naar een DTO om terug te sturen
         return transferToDto(savedRol);
+    }
+
+    // Werk een bestaande rol bij
+    public RolDto updateRol(Long id, RolDto rolDto) {
+        Rol existingRol = rolRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Rol niet gevonden met id: " + id));
+
+        // Pas de gegevens aan
+        existingRol.setRolNaam(rolDto.getRolNaam());
+        existingRol.setRolBeschrijving(rolDto.getRolBeschrijving());
+
+        // Sla de gewijzigde entiteit op
+        Rol updatedRol = rolRepository.save(existingRol);
+        return transferToDto(updatedRol);
+    }
+
+    // Verwijder een rol op basis van ID
+    public void deleteRol(Long id) {
+        if (!rolRepository.existsById(id)) {
+            throw new RecordNotFoundException("Rol niet gevonden met id: " + id);
+        }
+        rolRepository.deleteById(id);
     }
 
     // Helper methode: Entiteit -> DTO

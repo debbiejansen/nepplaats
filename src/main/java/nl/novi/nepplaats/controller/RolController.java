@@ -19,10 +19,34 @@ public class RolController {
         this.rolService = rolService;
     }
 
-    // POST: Nieuwe categorie toevoegen
-    @PostMapping("/create")
-    public ResponseEntity<RolDto> createRol(@RequestBody RolDto newRolDto) {
-        RolDto createdRol = rolService.createRol(newRolDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRol);
+    // GET: Gegevens ophalen
+    @GetMapping
+    public ResponseEntity<List<RolDto>> getAllRols() {
+        return ResponseEntity.ok(rolService.getAllRols());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RolDto> getRolById(@PathVariable Long id) {
+        return ResponseEntity.ok(rolService.getRolById(id));
+    }
+
+    // POST: Nieuwe gegevens toevoegen
+    @PostMapping
+    public ResponseEntity<RolDto> createRol(@RequestBody RolDto rolDto) {
+        RolDto created = rolService.createRol(rolDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    // PUT: Gegevens updaten
+    @PutMapping("/{id}")
+    public ResponseEntity<RolDto> updateRol(@PathVariable Long id, @RequestBody RolDto rolDto) {
+        return ResponseEntity.ok(rolService.updateRol(id, rolDto));
+    }
+
+    // DELETE: Gegevens verwijderen
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRol(@PathVariable Long id) {
+        rolService.deleteRol(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -30,6 +30,14 @@ public class CategorieService {
         return categoryDtos;
     }
 
+    // Haal één specifieke categorie op op basis van ID
+    public CategorieDto getCategoryById(Long id) {
+        Categorie categorie = categorieRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Categorie met ID " + id + " niet gevonden"));
+
+        return transferToDto(categorie);
+    }
+
     // Maak een nieuwe categorie aan
     public CategorieDto createCategory(CategorieDto categorieDto) {
         // Zet DTO om naar Entiteit
@@ -63,7 +71,14 @@ public class CategorieService {
         return transferToDto(updatedCategorie);
     }
 
+    // Verwijder een categorie op basis van ID
+    public void deleteCategory(Long id) {
+        if (!categorieRepository.existsById(id)) {
+            throw new RecordNotFoundException("Categorie met ID " + id + " niet gevonden");
+        }
 
+        categorieRepository.deleteById(id);
+    }
 
     // Helper methode: Entiteit -> DTO
     private CategorieDto transferToDto(Categorie categorie) {

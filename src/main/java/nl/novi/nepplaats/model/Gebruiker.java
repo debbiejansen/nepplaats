@@ -11,7 +11,7 @@ public class Gebruiker {
     @Column(name = "user_id")
     private Long gebruikerId;
 
-    @Column(name = "gebruikersnaam", unique = true, nullable = false)
+    @Column(name = "gebruikersnaam", nullable = false)
     private String gebruikersnaam;
 
     @Column(name = "email", unique = true, nullable = false)

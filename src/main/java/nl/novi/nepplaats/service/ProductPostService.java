@@ -1,14 +1,8 @@
 package nl.novi.nepplaats.service;
 
 import nl.novi.nepplaats.dto.productpost.ProductPostDto;
-import nl.novi.nepplaats.model.Categorie;
-import nl.novi.nepplaats.model.Gebruiker;
-import nl.novi.nepplaats.model.ProductPost;
-import nl.novi.nepplaats.model.Status;
-import nl.novi.nepplaats.repository.CategorieRepository;
-import nl.novi.nepplaats.repository.GebruikerRepository;
-import nl.novi.nepplaats.repository.ProductPostRepository;
-import nl.novi.nepplaats.repository.StatusRepository;
+import nl.novi.nepplaats.model.*;
+import nl.novi.nepplaats.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,15 +16,18 @@ public class ProductPostService {
     private final GebruikerRepository gebruikerRepository;
     private final CategorieRepository categorieRepository;
     private final StatusRepository statusRepository;
+    private final AfbeeldingRepository afbeeldingRepository;
 
     public ProductPostService(ProductPostRepository repository,
                               GebruikerRepository gebruikerRepository,
                               CategorieRepository categorieRepository,
-                              StatusRepository statusRepository) {
+                              StatusRepository statusRepository,
+                              AfbeeldingRepository afbeeldingRepository) {
         this.repository = repository;
         this.gebruikerRepository = gebruikerRepository;
         this.categorieRepository = categorieRepository;
         this.statusRepository = statusRepository;
+        this.afbeeldingRepository = afbeeldingRepository;
     }
 
     public List<ProductPostDto.Response> getAllPosts(Long categorieId, Long statusId, BigDecimal maxPrijs) {
@@ -79,8 +76,10 @@ public class ProductPostService {
         if (dto.getPrijs() != null) {
             existing.setPrijs(dto.getPrijs());
         }
-        if (dto.getAfbeelding() != null) {
-            existing.setAfbeelding(dto.getAfbeelding());
+        if (dto.getAfbeeldingId() != null) {
+            Afbeelding afbeelding = afbeeldingRepository.findById(dto.getAfbeeldingId())
+                    .orElseThrow(() -> new RuntimeException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
+            existing.setAfbeelding(afbeelding);
         }
 
         // relaties
@@ -119,14 +118,15 @@ public class ProductPostService {
         dto.setTitel(entity.getTitel());
         dto.setBeschrijving(entity.getBeschrijving());
         dto.setPrijs(entity.getPrijs());
-        dto.setAfbeelding(entity.getAfbeelding());
         dto.setPostDate(entity.getPostDate());
 
         // null checks
+        if (entity.getAfbeelding() != null) {
+            dto.setAfbeeldingId(entity.getAfbeelding().getAfbeeldingId());
+        }
         if (entity.getPoster() != null) {
             dto.setPosterId(entity.getPoster().getGebruikerId());
         }
-
         if (entity.getCategorie() != null) {
             dto.setCategorieId(entity.getCategorie().getCategorieId());
         }
@@ -142,12 +142,18 @@ public class ProductPostService {
         post.setTitel(dto.getTitel());
         post.setBeschrijving(dto.getBeschrijving());
         post.setPrijs(dto.getPrijs());
-        post.setAfbeelding(dto.getAfbeelding());
 
         // Fetch and SET poster
         Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
                 .orElseThrow(() -> new RuntimeException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
         post.setPoster(poster);
+
+        // Fetch and SET afbeelding
+        if (dto.getAfbeeldingId() != null) {
+            Afbeelding afbeelding = afbeeldingRepository.findById(dto.getAfbeeldingId())
+                    .orElseThrow(() -> new RuntimeException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
+            post.setAfbeelding(afbeelding);
+        }
 
         // Fetch and SET categorie
         if (dto.getCategorieId() != null) {

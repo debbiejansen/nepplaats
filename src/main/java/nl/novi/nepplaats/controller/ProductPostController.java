@@ -33,7 +33,7 @@ public class ProductPostController {
         return ResponseEntity.ok(service.getPostById(id));
     }
 
-    @PostMapping("/create")
+    @PostMapping
     public ResponseEntity<ProductPostDto.Response> createPost(@Valid @RequestBody ProductPostDto.Request dto) {
         ProductPostDto.Response created = service.createPost(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
