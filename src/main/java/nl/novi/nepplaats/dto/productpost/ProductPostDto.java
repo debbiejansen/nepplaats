@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class ProductPostDto {
 
@@ -17,7 +18,8 @@ public class ProductPostDto {
         @NotNull(message = "Prijs is verplicht")
         @Positive(message = "Prijs moet hoger zijn dan 0")
         private BigDecimal prijs;
-        private String afbeelding;
+
+        private UUID afbeeldingId;
 
         @NotNull(message = "Poster ID is verplicht")
         private Long posterId;
@@ -34,8 +36,8 @@ public class ProductPostDto {
         public BigDecimal getPrijs() { return prijs; }
         public void setPrijs(BigDecimal prijs) { this.prijs = prijs; }
 
-        public String getAfbeelding() { return afbeelding; }
-        public void setAfbeelding(String afbeelding) { this.afbeelding = afbeelding; }
+        public UUID getAfbeeldingId() { return afbeeldingId; }
+        public void setAfbeeldingId(UUID afbeeldingId) { this.afbeeldingId = afbeeldingId; }
 
         public Long getPosterId() { return posterId; }
         public void setPosterId(Long posterId) { this.posterId = posterId; }
@@ -53,7 +55,7 @@ public class ProductPostDto {
         private String titel;
         private String beschrijving;
         private BigDecimal prijs;
-        private String afbeelding;
+        private UUID afbeeldingId;
         private LocalDateTime postDate;
         private Long posterId;
         private Long categorieId;
@@ -72,8 +74,8 @@ public class ProductPostDto {
         public BigDecimal getPrijs() { return prijs; }
         public void setPrijs(BigDecimal prijs) { this.prijs = prijs; }
 
-        public String getAfbeelding() { return afbeelding; }
-        public void setAfbeelding(String afbeelding) { this.afbeelding = afbeelding; }
+        public UUID getAfbeeldingId() { return afbeeldingId; }
+        public void setAfbeeldingId(UUID afbeeldingId) { this.afbeeldingId = afbeeldingId; }
 
         public LocalDateTime getPostDate() { return postDate; }
         public void setPostDate(LocalDateTime postDate) { this.postDate = postDate; }
