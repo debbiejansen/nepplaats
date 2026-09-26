@@ -5,6 +5,7 @@ import nl.novi.nepplaats.dto.gebruiker.GebruikerDto;
 import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.Gebruiker;
 import nl.novi.nepplaats.repository.GebruikerRepository;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -40,6 +41,30 @@ public class GebruikerService {
         return transferToDto(gebruiker);
     }
 
+    /**
+     * Zoekt de gebruiker op basis van het Keycloak ID (sub claim uit JWT).
+     * Als de gebruiker nog niet bestaat in de PostgreSQL database, wordt deze automatisch aangemaakt.
+     */
+    public Gebruiker getOrCreateGebruikerFromJwt(Jwt jwt) {
+        String keycloakId = jwt.getSubject(); // 'sub' claim uit JWT (unieke UUID van Keycloak)
+
+        return gebruikerRepository.findByKeycloakId(keycloakId)
+                .orElseGet(() -> {
+                    // Gebruiker bestaat nog niet in onze database -> Automatisch profiel aanmaken!
+                    Gebruiker nieuweGebruiker = new Gebruiker();
+                    nieuweGebruiker.setKeycloakId(keycloakId);
+
+                    // Haal claims op uit de JWT (Keycloak levert deze standaard mee)
+                    String email = jwt.getClaimAsString("email");
+                    String username = jwt.getClaimAsString("preferred_username");
+
+                    nieuweGebruiker.setEmail(email != null ? email : "onbekend@keycloak.com");
+                    nieuweGebruiker.setGebruikersnaam(username != null ? username : keycloakId);
+                    nieuweGebruiker.setBeschrijving("Nieuwe gebruiker via Keycloak");
+
+                    return gebruikerRepository.save(nieuweGebruiker);
+                });
+    }
 
     // Maak een nieuwe gebruiker aan
     public GebruikerDto.Response createGebruiker(GebruikerDto.Request gebruikerDto) {
@@ -56,7 +81,6 @@ public class GebruikerService {
         // Werk de velden bij
         bestaandeGebruiker.setGebruikersnaam(gebruikerDto.getGebruikersnaam());
         bestaandeGebruiker.setEmail(gebruikerDto.getEmail());
-        bestaandeGebruiker.setWachtwoord(gebruikerDto.getWachtwoord());
         bestaandeGebruiker.setRolId(gebruikerDto.getRolId());
         bestaandeGebruiker.setBeschrijving(gebruikerDto.getBeschrijving());
 
@@ -77,7 +101,6 @@ public class GebruikerService {
         Gebruiker gebruiker = new Gebruiker();
         gebruiker.setGebruikersnaam(dto.getGebruikersnaam());
         gebruiker.setEmail(dto.getEmail());
-        gebruiker.setWachtwoord(dto.getWachtwoord());
         gebruiker.setRolId(dto.getRolId());
         gebruiker.setBeschrijving(dto.getBeschrijving());
         return gebruiker;

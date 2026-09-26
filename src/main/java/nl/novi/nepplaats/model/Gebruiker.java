@@ -17,8 +17,8 @@ public class Gebruiker {
     @Column(name = "email", unique = true, nullable = false)
     private String email;
 
-    @Column(name = "wachtwoord", nullable = false)
-    private String wachtwoord;
+    @Column(name = "keycloak_id", nullable = false)
+    private String keycloakId;
 
     @Column(name = "rol_id")
     private Long rolId;
@@ -30,10 +30,10 @@ public class Gebruiker {
     public Gebruiker() {
     }
 
-    public Gebruiker(String gebruikersnaam, String email, String wachtwoord) {
+    public Gebruiker(String gebruikersnaam, String email, String keycloakId) {
         this.gebruikersnaam = gebruikersnaam;
         this.email = email;
-        this.wachtwoord = wachtwoord;
+        this.keycloakId = keycloakId;
     }
 
     // Getters en Setters
@@ -61,12 +61,12 @@ public class Gebruiker {
         this.email = email;
     }
 
-    public String getWachtwoord() {
-        return wachtwoord;
+    public String getKeycloakId() {
+        return keycloakId;
     }
 
-    public void setWachtwoord(String wachtwoord) {
-        this.wachtwoord = wachtwoord;
+    public void setKeycloakId(String keycloakId) {
+        this.keycloakId = keycloakId;
     }
 
     public Long getRolId() {

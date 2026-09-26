@@ -18,6 +18,9 @@ public interface GebruikerRepository extends JpaRepository<Gebruiker, Long> {
     // Zoekt een gebruiker op basis van uniek e-mailadres
     Optional<Gebruiker> findByEmail(String email);
 
+    // Zoekt een gebruiker op basis van uniek keycloak_id
+    Optional<Gebruiker> findByKeycloakId(String keycloakId);
+
     // Controleert of een e-mailadres al in gebruik is
     boolean existsByEmail(String email);
 
@@ -27,4 +30,5 @@ public interface GebruikerRepository extends JpaRepository<Gebruiker, Long> {
     // Voorbeeld van een JPQL query: Vindt gebruikers op basis van zoekterm in gebruikersnaam
     @Query("SELECT g FROM Gebruiker g WHERE g.gebruikersnaam LIKE %:zoekterm%")
     List<Gebruiker> zoekGebruikersMetNaam(@Param("zoekterm") String zoekterm);
+
 }
