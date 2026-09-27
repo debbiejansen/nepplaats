@@ -5,10 +5,12 @@ import nl.novi.nepplaats.dto.gebruiker.GebruikerDto;
 import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.Gebruiker;
 import nl.novi.nepplaats.repository.GebruikerRepository;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GebruikerService {
@@ -40,6 +42,60 @@ public class GebruikerService {
         return transferToDto(gebruiker);
     }
 
+    /**
+     * Zoekt de gebruiker op basis van het Keycloak ID (sub claim uit JWT).
+     * Als de gebruiker nog niet bestaat in de PostgreSQL database, wordt deze automatisch aangemaakt.
+     */
+    public Gebruiker getOrCreateGebruikerFromJwt(Jwt jwt) {
+        String keycloakId = jwt.getSubject(); // 'sub' claim uit JWT (unieke UUID van Keycloak)
+        Long berekendeRolId = bepaalRolIdUitJwt(jwt);
+        // 1. Zoek bestaande gebruiker OF maak een nieuwe aan
+        Gebruiker gebruiker = gebruikerRepository.findByKeycloakId(keycloakId)
+                .orElseGet(() -> {
+                    // Gebruiker bestaat nog niet in onze database -> Automatisch profiel aanmaken!
+                    Gebruiker nieuweGebruiker = new Gebruiker();
+                    nieuweGebruiker.setKeycloakId(keycloakId);
+
+                    // Haal claims op uit de JWT (Keycloak levert deze standaard mee)
+                    String email = jwt.getClaimAsString("email");
+                    String username = jwt.getClaimAsString("preferred_username");
+
+                    nieuweGebruiker.setEmail(email != null ? email : "onbekend@keycloak.com");
+                    nieuweGebruiker.setGebruikersnaam(username != null ? username : keycloakId);
+                    nieuweGebruiker.setBeschrijving("Nieuwe gebruiker via Keycloak");
+
+                    // Bepaal rol_id: 1 voor ADMIN, 2 voor USER
+                    nieuweGebruiker.setRolId(bepaalRolIdUitJwt(jwt));
+                    return gebruikerRepository.save(nieuweGebruiker);
+                });
+        // 2. Zorg dat de rol_id ALTIJD (ook bij bestaande gebruikers) geüpdatet wordt als deze verschilt
+        if (gebruiker.getRolId() == null || !gebruiker.getRolId().equals(berekendeRolId)) {
+            gebruiker.setRolId(berekendeRolId);
+            return gebruikerRepository.save(gebruiker);
+        }
+
+        return gebruiker;
+    }
+
+    /**
+     * Helper methode om veilig de rollen uit de geneste Map van de JWT te lezen.
+     */
+    @SuppressWarnings("unchecked")
+    private Long bepaalRolIdUitJwt(Jwt jwt) {
+        Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+
+        if (resourceAccess != null && resourceAccess.get("nepplaats-backend") instanceof Map) {
+            Map<String, Object> client = (Map<String, Object>) resourceAccess.get("nepplaats-backend");
+            if (client != null && client.containsKey("roles")) {
+                List<String> roles = (List<String>) client.get("roles");
+                if (roles != null && (roles.contains("ADMIN") || roles.contains("ROLE_ADMIN"))) {
+                    return 1L; // ADMIN
+                }
+            }
+        }
+
+        return 2L; // Standard USER
+    }
 
     // Maak een nieuwe gebruiker aan
     public GebruikerDto.Response createGebruiker(GebruikerDto.Request gebruikerDto) {
@@ -56,7 +112,6 @@ public class GebruikerService {
         // Werk de velden bij
         bestaandeGebruiker.setGebruikersnaam(gebruikerDto.getGebruikersnaam());
         bestaandeGebruiker.setEmail(gebruikerDto.getEmail());
-        bestaandeGebruiker.setWachtwoord(gebruikerDto.getWachtwoord());
         bestaandeGebruiker.setRolId(gebruikerDto.getRolId());
         bestaandeGebruiker.setBeschrijving(gebruikerDto.getBeschrijving());
 
@@ -77,7 +132,6 @@ public class GebruikerService {
         Gebruiker gebruiker = new Gebruiker();
         gebruiker.setGebruikersnaam(dto.getGebruikersnaam());
         gebruiker.setEmail(dto.getEmail());
-        gebruiker.setWachtwoord(dto.getWachtwoord());
         gebruiker.setRolId(dto.getRolId());
         gebruiker.setBeschrijving(dto.getBeschrijving());
         return gebruiker;

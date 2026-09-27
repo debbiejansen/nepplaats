@@ -17,10 +17,6 @@ public class GebruikerDto {
         @Email(message = "Voer een geldig e-mailadres in")
         private String email;
 
-        @NotBlank(message = "Wachtwoord is verplicht")
-        @Size(min = 6, message = "Wachtwoord moet minimaal 6 tekens bevatten")
-        private String wachtwoord;
-
         @NotNull(message = "Rol ID is verplicht")
         private Long rolId;
 
@@ -30,10 +26,9 @@ public class GebruikerDto {
         public Request() {
         }
 
-        public Request(String gebruikersnaam, String email, String wachtwoord, Long rolId, String beschrijving) {
+        public Request(String gebruikersnaam, String email, Long rolId, String beschrijving) {
             this.gebruikersnaam = gebruikersnaam;
             this.email = email;
-            this.wachtwoord = wachtwoord;
             this.rolId = rolId;
             this.beschrijving = beschrijving;
         }
@@ -44,9 +39,6 @@ public class GebruikerDto {
 
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
-
-        public String getWachtwoord() { return wachtwoord; }
-        public void setWachtwoord(String wachtwoord) { this.wachtwoord = wachtwoord; }
 
         public Long getRolId() { return rolId; }
         public void setRolId(Long rolId) { this.rolId = rolId; }
