@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GebruikerService {
@@ -47,8 +48,9 @@ public class GebruikerService {
      */
     public Gebruiker getOrCreateGebruikerFromJwt(Jwt jwt) {
         String keycloakId = jwt.getSubject(); // 'sub' claim uit JWT (unieke UUID van Keycloak)
-
-        return gebruikerRepository.findByKeycloakId(keycloakId)
+        Long berekendeRolId = bepaalRolIdUitJwt(jwt);
+        // 1. Zoek bestaande gebruiker OF maak een nieuwe aan
+        Gebruiker gebruiker = gebruikerRepository.findByKeycloakId(keycloakId)
                 .orElseGet(() -> {
                     // Gebruiker bestaat nog niet in onze database -> Automatisch profiel aanmaken!
                     Gebruiker nieuweGebruiker = new Gebruiker();
@@ -62,8 +64,37 @@ public class GebruikerService {
                     nieuweGebruiker.setGebruikersnaam(username != null ? username : keycloakId);
                     nieuweGebruiker.setBeschrijving("Nieuwe gebruiker via Keycloak");
 
+                    // Bepaal rol_id: 1 voor ADMIN, 2 voor USER
+                    nieuweGebruiker.setRolId(bepaalRolIdUitJwt(jwt));
                     return gebruikerRepository.save(nieuweGebruiker);
                 });
+        // 2. Zorg dat de rol_id ALTIJD (ook bij bestaande gebruikers) geüpdatet wordt als deze verschilt
+        if (gebruiker.getRolId() == null || !gebruiker.getRolId().equals(berekendeRolId)) {
+            gebruiker.setRolId(berekendeRolId);
+            return gebruikerRepository.save(gebruiker);
+        }
+
+        return gebruiker;
+    }
+
+    /**
+     * Helper methode om veilig de rollen uit de geneste Map van de JWT te lezen.
+     */
+    @SuppressWarnings("unchecked")
+    private Long bepaalRolIdUitJwt(Jwt jwt) {
+        Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+
+        if (resourceAccess != null && resourceAccess.get("nepplaats-backend") instanceof Map) {
+            Map<String, Object> client = (Map<String, Object>) resourceAccess.get("nepplaats-backend");
+            if (client != null && client.containsKey("roles")) {
+                List<String> roles = (List<String>) client.get("roles");
+                if (roles != null && (roles.contains("ADMIN") || roles.contains("ROLE_ADMIN"))) {
+                    return 1L; // ADMIN
+                }
+            }
+        }
+
+        return 2L; // Standard USER
     }
 
     // Maak een nieuwe gebruiker aan
