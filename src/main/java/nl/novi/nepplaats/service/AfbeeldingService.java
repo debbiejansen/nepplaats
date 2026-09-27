@@ -3,6 +3,7 @@ package nl.novi.nepplaats.service;
 import nl.novi.nepplaats.model.Afbeelding;
 import nl.novi.nepplaats.repository.AfbeeldingRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class AfbeeldingService {
         return repository.save(afbeelding);
     }
 
+    @Transactional(readOnly = true)
     public Afbeelding getAfbeelding(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Afbeelding niet gevonden met id: " + id));
