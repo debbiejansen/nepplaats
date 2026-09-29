@@ -2,6 +2,8 @@ package nl.novi.nepplaats.service;
 
 import nl.novi.nepplaats.dto.transactie.TransactieDto;
 import nl.novi.nepplaats.exception.RecordNotFoundException;
+import nl.novi.nepplaats.model.Gebruiker;
+import nl.novi.nepplaats.model.ProductPost;
 import nl.novi.nepplaats.model.Transactie;
 import nl.novi.nepplaats.repository.GebruikerRepository;
 import nl.novi.nepplaats.repository.ProductPostRepository;
@@ -48,9 +50,13 @@ public class TransactieService {
 
     // Maak een nieuwe transactie aan
     public TransactieDto.Response createTransactie(TransactieDto.Request dto) {
+        if (transactieRepository.existsByProductPost_ProductPostId(dto.getProductPostId())) {
+            throw new IllegalStateException("Er bestaat al een transactie voor ProductPost id: " + dto.getProductPostId());
+        }
+
         // Valideer of het product en de koper daadwerkelijk bestaan
-        if (!productPostRepository.existsById(dto.getOriginalProductPostId())) {
-            throw new RecordNotFoundException("ProductPost niet gevonden met id: " + dto.getOriginalProductPostId());
+        if (!productPostRepository.existsById(dto.getProductPostId())) {
+            throw new RecordNotFoundException("ProductPost niet gevonden met id: " + dto.getProductPostId());
         }
 
         if (!gebruikerRepository.existsById(dto.getKoperId())) {
@@ -74,8 +80,14 @@ public class TransactieService {
     // Helper methode: DTO -> Entiteit
     private Transactie toEntity(TransactieDto.Request dto) {
         Transactie transactie = new Transactie();
-        transactie.setOriginalProductPostId(dto.getOriginalProductPostId());
-        transactie.setKoperId(dto.getKoperId());
+
+        ProductPost productPost = productPostRepository.findById(dto.getProductPostId())
+                .orElseThrow(() -> new RecordNotFoundException("ProductPost niet gevonden met id: " + dto.getProductPostId()));
+        transactie.setProductPost(productPost);
+
+        Gebruiker koper = gebruikerRepository.findById(dto.getKoperId())
+                .orElseThrow(() -> new RecordNotFoundException("Koper niet gevonden met id: " + dto.getKoperId()));
+        transactie.setKoper(koper);
         return transactie;
     }
 
@@ -83,8 +95,12 @@ public class TransactieService {
     private TransactieDto.Response toResponseDto(Transactie entity) {
         TransactieDto.Response dto = new TransactieDto.Response();
         dto.setTransactieId(entity.getTransactieId());
-        dto.setOriginalProductPostId(entity.getOriginalProductPostId());
-        dto.setKoperId(entity.getKoperId());
+        if (entity.getKoper() != null) {
+            dto.setKoperId(entity.getKoper().getGebruikersnaam() != null ? entity.getKoper().getGebruikerId() : null);
+        }
+        if (entity.getProductPost() != null) {
+            dto.setProductPostId(entity.getProductPost().getProductPostId());
+        }
         dto.setTijd(entity.getTijd());
         return dto;
     }

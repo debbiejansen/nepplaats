@@ -1,6 +1,7 @@
 package nl.novi.nepplaats.service;
 
 import nl.novi.nepplaats.dto.productpost.ProductPostDto;
+import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.*;
 import nl.novi.nepplaats.repository.*;
 import org.springframework.stereotype.Service;
@@ -12,35 +13,35 @@ import java.util.List;
 @Service
 public class ProductPostService {
 
-    private final ProductPostRepository repository;
+    private final ProductPostRepository productPostRepository;
     private final GebruikerRepository gebruikerRepository;
     private final CategorieRepository categorieRepository;
     private final StatusRepository statusRepository;
     private final AfbeeldingRepository afbeeldingRepository;
 
-    public ProductPostService(ProductPostRepository repository,
+    public ProductPostService(ProductPostRepository productPostRepository,
                               GebruikerRepository gebruikerRepository,
                               CategorieRepository categorieRepository,
                               StatusRepository statusRepository,
                               AfbeeldingRepository afbeeldingRepository) {
-        this.repository = repository;
+        this.productPostRepository = productPostRepository;
         this.gebruikerRepository = gebruikerRepository;
         this.categorieRepository = categorieRepository;
         this.statusRepository = statusRepository;
         this.afbeeldingRepository = afbeeldingRepository;
     }
 
-    public List<ProductPostDto.Response> getAllPosts(Long categorieId, Long statusId, BigDecimal maxPrijs) {
+    public List<ProductPostDto.Response> getAllProductPosts(Long categorieId, Long statusId, BigDecimal maxPrijs) {
         List<ProductPost> posts;
 
         if (categorieId != null) {
-            posts = repository.findByCategorieCategorieId(categorieId);// posts = repository.findByCategorieCategorieId(categorieId);
+            posts = productPostRepository.findByCategorie_CategorieId(categorieId);// posts = repository.findByCategorieCategorieId(categorieId);
         } else if (statusId != null) {
-            posts = repository.findByStatusStatusId(statusId);
+            posts = productPostRepository.findByStatus_StatusId(statusId);
         } else if (maxPrijs != null) {
-            posts = repository.findByPrijsLessThanEqual(maxPrijs);
+            posts = productPostRepository.findByPrijsLessThanEqual(maxPrijs);
         } else {
-            posts = repository.findAll();
+            posts = productPostRepository.findAll();
         }
 
         List<ProductPostDto.Response> dtos = new ArrayList<>();
@@ -50,65 +51,64 @@ public class ProductPostService {
         return dtos;
     }
 
-    public ProductPostDto.Response getPostById(Long id) {
-        ProductPost post = repository.findById(id)
+    public ProductPostDto.Response getProductPostById(Long id) {
+        ProductPost post = productPostRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product niet gevonden met id: " + id));
         return toResponseDto(post);
     }
 
-    public ProductPostDto.Response createPost(ProductPostDto.Request dto) {
+    public ProductPostDto.Response createProductPost(ProductPostDto.Request dto) {
         ProductPost post = toEntity(dto);
-        ProductPost savedPost = repository.save(post);
+        ProductPost savedPost = productPostRepository.save(post);
         return toResponseDto(savedPost);
     }
 
-    public ProductPostDto.Response updatePost(Long id, ProductPostDto.Request dto) {
-        ProductPost existing = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ProductPost niet gevonden met id: " + id));
+    public ProductPostDto.Response updateProductPost(Long id, ProductPostDto.Request dto) {
+        ProductPost existingProductPost = productPostRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("ProductPost niet gevonden met id: " + id));
 
         // Update alleen als het veld is meegegeven in de request
         if (dto.getTitel() != null) {
-            existing.setTitel(dto.getTitel());
+            existingProductPost.setTitel(dto.getTitel());
         }
         if (dto.getBeschrijving() != null) {
-            existing.setBeschrijving(dto.getBeschrijving());
+            existingProductPost.setBeschrijving(dto.getBeschrijving());
         }
         if (dto.getPrijs() != null) {
-            existing.setPrijs(dto.getPrijs());
+            existingProductPost.setPrijs(dto.getPrijs());
         }
         if (dto.getAfbeeldingId() != null) {
             Afbeelding afbeelding = afbeeldingRepository.findById(dto.getAfbeeldingId())
                     .orElseThrow(() -> new RuntimeException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
-            existing.setAfbeelding(afbeelding);
+            existingProductPost.setAfbeelding(afbeelding);
         }
 
         // relaties
         if (dto.getPosterId() != null) {
             Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
                     .orElseThrow(() -> new RuntimeException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
-            existing.setPoster(poster);
+            existingProductPost.setPoster(poster);
         }
         if (dto.getCategorieId() != null) {
             Categorie categorie = categorieRepository.findById(dto.getCategorieId())
                     .orElseThrow(() -> new RuntimeException("Categorie niet gevonden met id: " + dto.getCategorieId()));
-            existing.setCategorie(categorie);
+            existingProductPost.setCategorie(categorie);
         }
-
         if (dto.getStatusId() != null) {
             Status status = statusRepository.findById(dto.getStatusId())
                     .orElseThrow(() -> new RuntimeException("Status niet gevonden met id: " + dto.getStatusId()));
-            existing.setStatus(status);
+            existingProductPost.setStatus(status);
         }
 
-        ProductPost updated = repository.save(existing);
+        ProductPost updated = productPostRepository.save(existingProductPost);
         return toResponseDto(updated);
     }
 
-    public void deletePost(Long id) {
-        if (!repository.existsById(id)) {
+    public void deleteProductPost(Long id) {
+        if (!productPostRepository.existsById(id)) {
             throw new RuntimeException("ProductPost niet gevonden met id: " + id);
         }
-        repository.deleteById(id);
+        productPostRepository.deleteById(id);
     }
 
     // Helpers methoden voor Mappings

@@ -4,7 +4,9 @@ package nl.novi.nepplaats.service;
 import nl.novi.nepplaats.dto.gebruiker.GebruikerDto;
 import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.Gebruiker;
+import nl.novi.nepplaats.model.Rol;
 import nl.novi.nepplaats.repository.GebruikerRepository;
+import nl.novi.nepplaats.repository.RolRepository;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +17,12 @@ import java.util.Map;
 @Service
 public class GebruikerService {
 
-
     private final GebruikerRepository gebruikerRepository;
+    private final RolRepository rolRepository;
 
-    public GebruikerService(GebruikerRepository gebruikerRepository) {
+    public GebruikerService(GebruikerRepository gebruikerRepository, RolRepository rolRepository) {
         this.gebruikerRepository = gebruikerRepository;
+        this.rolRepository = rolRepository;
     }
 
     // Haal alle gebruiker op en zet ze om naar DTO's
@@ -47,16 +50,19 @@ public class GebruikerService {
      * Als de gebruiker nog niet bestaat in de PostgreSQL database, wordt deze automatisch aangemaakt.
      */
     public Gebruiker getOrCreateGebruikerFromJwt(Jwt jwt) {
-        String keycloakId = jwt.getSubject(); // 'sub' claim uit JWT (unieke UUID van Keycloak)
+        String keycloakId = jwt.getSubject();
         Long berekendeRolId = bepaalRolIdUitJwt(jwt);
+
+        // Fetch the corresponding Rol entity from DB
+        Rol berekendeRol = rolRepository.findById(berekendeRolId)
+                .orElseThrow(() -> new RecordNotFoundException("Rol niet gevonden voor ID: " + berekendeRolId));
+
         // 1. Zoek bestaande gebruiker OF maak een nieuwe aan
         Gebruiker gebruiker = gebruikerRepository.findByKeycloakId(keycloakId)
                 .orElseGet(() -> {
-                    // Gebruiker bestaat nog niet in onze database -> Automatisch profiel aanmaken!
                     Gebruiker nieuweGebruiker = new Gebruiker();
                     nieuweGebruiker.setKeycloakId(keycloakId);
 
-                    // Haal claims op uit de JWT (Keycloak levert deze standaard mee)
                     String email = jwt.getClaimAsString("email");
                     String username = jwt.getClaimAsString("preferred_username");
 
@@ -64,19 +70,19 @@ public class GebruikerService {
                     nieuweGebruiker.setGebruikersnaam(username != null ? username : keycloakId);
                     nieuweGebruiker.setBeschrijving("Nieuwe gebruiker via Keycloak");
 
-                    // Bepaal rol_id: 1 voor ADMIN, 2 voor USER
-                    nieuweGebruiker.setRolId(bepaalRolIdUitJwt(jwt));
+                    // Set the Rol entity reference instead of a raw Long
+                    nieuweGebruiker.setRol(berekendeRol);
                     return gebruikerRepository.save(nieuweGebruiker);
                 });
-        // 2. Zorg dat de rol_id ALTIJD (ook bij bestaande gebruikers) geüpdatet wordt als deze verschilt
-        if (gebruiker.getRolId() == null || !gebruiker.getRolId().equals(berekendeRolId)) {
-            gebruiker.setRolId(berekendeRolId);
+
+        // 2. Zorg dat de rol ALTIJD geüpdatet wordt als deze verschilt
+        if (gebruiker.getRol() == null || !gebruiker.getRol().getRolId().equals(berekendeRolId)) {
+            gebruiker.setRol(berekendeRol);
             return gebruikerRepository.save(gebruiker);
         }
 
         return gebruiker;
     }
-
     /**
      * Helper methode om veilig de rollen uit de geneste Map van de JWT te lezen.
      */
@@ -109,10 +115,13 @@ public class GebruikerService {
         Gebruiker bestaandeGebruiker = gebruikerRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Gebruiker niet gevonden met id: " + id));
 
+        Rol rol = rolRepository.findById(gebruikerDto.getRolId())
+                .orElseThrow(() -> new RecordNotFoundException("Rol niet gevonden met id: " + gebruikerDto.getRolId()));
+
         // Werk de velden bij
         bestaandeGebruiker.setGebruikersnaam(gebruikerDto.getGebruikersnaam());
         bestaandeGebruiker.setEmail(gebruikerDto.getEmail());
-        bestaandeGebruiker.setRolId(gebruikerDto.getRolId());
+        bestaandeGebruiker.setRol(rol);
         bestaandeGebruiker.setBeschrijving(gebruikerDto.getBeschrijving());
 
         Gebruiker gewijzigdeGebruiker = gebruikerRepository.save(bestaandeGebruiker);
@@ -130,9 +139,11 @@ public class GebruikerService {
     // Helper methode: DTO -> Entiteit
     private Gebruiker transferToEntity(GebruikerDto.Request dto) {
         Gebruiker gebruiker = new Gebruiker();
+        Rol rol = rolRepository.findById(dto.getRolId())
+                .orElseThrow(() -> new RecordNotFoundException("Rol niet gevonden met id: " + dto.getRolId()));
         gebruiker.setGebruikersnaam(dto.getGebruikersnaam());
         gebruiker.setEmail(dto.getEmail());
-        gebruiker.setRolId(dto.getRolId());
+        gebruiker.setRol(rol);
         gebruiker.setBeschrijving(dto.getBeschrijving());
         return gebruiker;
     }
@@ -143,7 +154,7 @@ public class GebruikerService {
         dto.setGebruikerId(gebruiker.getGebruikerId());
         dto.setGebruikersnaam(gebruiker.getGebruikersnaam());
         dto.setEmail(gebruiker.getEmail());
-        dto.setRolId(gebruiker.getRolId());
+        dto.setRolId(gebruiker.getRol().getRolId());
         dto.setBeschrijving(gebruiker.getBeschrijving());
         return dto;
     }

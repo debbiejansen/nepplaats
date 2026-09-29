@@ -13,6 +13,7 @@ import java.util.UUID;
 public class Afbeelding {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "afbeelding_id", nullable = false, updatable = false)
     private UUID afbeeldingId;
 

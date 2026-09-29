@@ -5,13 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TransactieRepository extends JpaRepository<Transactie, Long> {
+    // Derived query methods traversing entity relationships
+    List<Transactie> findByKoper_GebruikerId(Long koperId);
 
-    // Vindt alle transacties gedaan door een specifieke koper
-    List<Transactie> findByKoperId(Long koperId);
+    Optional<Transactie> findByProductPost_ProductPostId(Long productPostId);
 
-    // Vindt transacties gerelateerd aan een specifiek product_post ID
-    List<Transactie> findByOriginalProductPostId(Long originalProductPostId);
+    boolean existsByProductPost_ProductPostId(Long productPostId);
 }

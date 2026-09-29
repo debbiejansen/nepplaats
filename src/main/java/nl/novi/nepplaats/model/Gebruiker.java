@@ -11,7 +11,7 @@ public class Gebruiker {
     @Column(name = "user_id")
     private Long gebruikerId;
 
-    @Column(name = "gebruikersnaam", nullable = false)
+    @Column(name = "gebruikersnaam")
     private String gebruikersnaam;
 
     @Column(name = "email", unique = true, nullable = false)
@@ -20,8 +20,9 @@ public class Gebruiker {
     @Column(name = "keycloak_id", nullable = false)
     private String keycloakId;
 
-    @Column(name = "rol_id")
-    private Long rolId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "rol_id", nullable = false)
+    private Rol rol;
 
     @Column(name = "beschrijving", columnDefinition = "TEXT")
     private String beschrijving;
@@ -69,13 +70,8 @@ public class Gebruiker {
         this.keycloakId = keycloakId;
     }
 
-    public Long getRolId() {
-        return rolId;
-    }
-
-    public void setRolId(Long rolId) {
-        this.rolId = rolId;
-    }
+    public Rol getRol() { return rol; }
+    public void setRol(Rol rol) { this.rol = rol; }
 
     public String getBeschrijving() {
         return beschrijving;

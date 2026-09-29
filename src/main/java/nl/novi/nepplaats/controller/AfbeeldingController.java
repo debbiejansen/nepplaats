@@ -30,9 +30,15 @@ public class AfbeeldingController {
     @GetMapping("/{id}")
     public ResponseEntity<byte[]> downloadAfbeelding(@PathVariable UUID id) {
         Afbeelding afbeelding = service.getAfbeelding(id);
-
+        // Fallback voor MediaType als het bestandstype niet goed geparsed kan worden
+        MediaType mediaType;
+        try {
+            mediaType = MediaType.parseMediaType(afbeelding.getBestandstype());
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(afbeelding.getBestandstype()))
+                .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + afbeelding.getOrigineleNaam() + "\"")
                 .body(afbeelding.getBestandData());
     }
