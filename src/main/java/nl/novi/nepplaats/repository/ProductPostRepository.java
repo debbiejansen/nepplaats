@@ -14,13 +14,13 @@ import java.util.List;
 public interface ProductPostRepository extends JpaRepository<ProductPost, Long> {
 
     // JPA snapt dat hij moet zoeken op de ID van de gekoppelde Gebruiker Entity
-    List<ProductPost> findByPosterGebruikerId(Long gebruikerId);
+    List<ProductPost> findByPoster_GebruikerId(Long posterId);
 
     // Zoek op ID van de Categorie Entity
-    List<ProductPost> findByCategorieCategorieId(Long categorieId);
+    List<ProductPost> findByCategorie_CategorieId(Long categorieId);
 
     // Zoek op ID van de Status Entity
-    List<ProductPost> findByStatusStatusId(Long statusId);
+    List<ProductPost> findByStatus_StatusId(Long statusId);
 
     List<ProductPost> findByPrijsLessThanEqual(BigDecimal maxPrijs);
 }

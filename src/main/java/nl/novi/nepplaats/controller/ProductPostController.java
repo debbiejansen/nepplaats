@@ -25,17 +25,17 @@ public class ProductPostController {
             @RequestParam(required = false) Long categorieId,
             @RequestParam(required = false) Long statusId,
             @RequestParam(required = false) BigDecimal maxPrijs) {
-        return ResponseEntity.ok(service.getAllPosts(categorieId, statusId, maxPrijs));
+        return ResponseEntity.ok(service.getAllProductPosts(categorieId, statusId, maxPrijs));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductPostDto.Response> getPostById(@PathVariable Long id) {
-        return ResponseEntity.ok(service.getPostById(id));
+        return ResponseEntity.ok(service.getProductPostById(id));
     }
 
     @PostMapping
     public ResponseEntity<ProductPostDto.Response> createPost(@Valid @RequestBody ProductPostDto.Request dto) {
-        ProductPostDto.Response created = service.createPost(dto);
+        ProductPostDto.Response created = service.createProductPost(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -43,12 +43,12 @@ public class ProductPostController {
     public ResponseEntity<ProductPostDto.Response> updatePost(
             @PathVariable Long id,
             @Valid @RequestBody ProductPostDto.Request dto) {
-        return ResponseEntity.ok(service.updatePost(id, dto));
+        return ResponseEntity.ok(service.updateProductPost(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        service.deletePost(id);
+        service.deleteProductPost(id);
         return ResponseEntity.noContent().build();
     }
 }

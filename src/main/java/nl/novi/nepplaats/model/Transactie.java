@@ -1,5 +1,6 @@
 package nl.novi.nepplaats.model;
 
+import nl.novi.nepplaats.dto.productpost.ProductPostDto;
 import org.hibernate.annotations.CreationTimestamp;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -13,11 +14,13 @@ public class Transactie {
     @Column(name = "transactie_id")
     private Long transactieId;
 
-    @Column(name = "original_product_post_id", nullable = false)
-    private Long originalProductPostId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "koper_id", nullable = false)
+    private Gebruiker koper;
 
-    @Column(name = "koper_id", nullable = false)
-    private Long koperId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_post_id", nullable = false, unique = true)
+    private ProductPost productPost;
 
     @CreationTimestamp
     @Column(name = "tijd", updatable = false)
@@ -27,9 +30,9 @@ public class Transactie {
     public Transactie() {
     }
 
-    public Transactie(Long originalProductPostId, Long koperId) {
-        this.originalProductPostId = originalProductPostId;
-        this.koperId = koperId;
+    public Transactie(ProductPost productPost, Gebruiker koper) {
+        this.productPost = productPost;
+        this.koper = koper;
     }
 
     // Getters en Setters
@@ -41,20 +44,20 @@ public class Transactie {
         this.transactieId = transactieId;
     }
 
-    public Long getOriginalProductPostId() {
-        return originalProductPostId;
+    public Gebruiker getKoper() {
+        return koper;
     }
 
-    public void setOriginalProductPostId(Long originalProductPostId) {
-        this.originalProductPostId = originalProductPostId;
+    public void setKoper(Gebruiker koper) {
+        this.koper = koper;
     }
 
-    public Long getKoperId() {
-        return koperId;
+    public ProductPost getProductPost() {
+        return productPost;
     }
 
-    public void setKoperId(Long koperId) {
-        this.koperId = koperId;
+    public void setProductPost(ProductPost productPost) {
+        this.productPost = productPost;
     }
 
     public LocalDateTime getTijd() {

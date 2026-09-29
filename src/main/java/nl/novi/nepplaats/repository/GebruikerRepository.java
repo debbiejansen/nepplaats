@@ -25,7 +25,7 @@ public interface GebruikerRepository extends JpaRepository<Gebruiker, Long> {
     boolean existsByEmail(String email);
 
     // Vindt alle gebruikers met een specifieke rolID
-    List<Gebruiker> findByRolId(Long rolId);
+    List<Gebruiker> findByRol_RolId(Long rolId);
 
     // Voorbeeld van een JPQL query: Vindt gebruikers op basis van zoekterm in gebruikersnaam
     @Query("SELECT g FROM Gebruiker g WHERE g.gebruikersnaam LIKE %:zoekterm%")
