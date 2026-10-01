@@ -36,8 +36,8 @@ public class Afbeelding {
 
     public Afbeelding() {}
 
-    public Afbeelding(UUID afbeeldingId, byte[] bestandData, String origineleNaam, String bestandstype, Long bestandsgrootte) {
-        this.afbeeldingId = afbeeldingId;
+    // Constructor voor nieuwe afbeeldingen (zonder ID)
+    public Afbeelding(byte[] bestandData, String origineleNaam, String bestandstype, Long bestandsgrootte) {
         this.bestandData = bestandData;
         this.origineleNaam = origineleNaam;
         this.bestandstype = bestandstype;

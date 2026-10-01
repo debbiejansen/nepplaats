@@ -25,7 +25,6 @@ public class ProductPostDto {
         private Long posterId;
         private Long categorieId;
 
-        @NotNull(message = "Status ID is verplicht")
         private Long statusId;
 
         // GETTERS EN SETTERS

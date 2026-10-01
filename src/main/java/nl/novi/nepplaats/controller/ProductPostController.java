@@ -39,6 +39,11 @@ public class ProductPostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
+    @PatchMapping("/{id}/reserveer")
+    public ResponseEntity<ProductPostDto.Response> reserveerPost(@PathVariable Long id) {
+        return ResponseEntity.ok(service.reserveerProductPost(id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ProductPostDto.Response> updatePost(
             @PathVariable Long id,
