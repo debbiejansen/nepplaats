@@ -23,12 +23,10 @@ public class AfbeeldingService {
             throw new IllegalArgumentException("Kan geen leeg bestand opslaan");
         }
 
-        UUID id = UUID.randomUUID();
         String origineleNaam = file.getOriginalFilename();
 
         Afbeelding afbeelding = new Afbeelding(
-                id,
-                file.getBytes(), // Zet bestand om naar byte[] voor PostgreSQL BYTEA
+                file.getBytes(),
                 origineleNaam != null ? origineleNaam : "onbekend",
                 file.getContentType() != null ? file.getContentType() : "application/octet-stream",
                 file.getSize()

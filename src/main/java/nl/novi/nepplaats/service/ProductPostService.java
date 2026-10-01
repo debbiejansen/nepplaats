@@ -5,6 +5,7 @@ import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.*;
 import nl.novi.nepplaats.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -53,12 +54,37 @@ public class ProductPostService {
 
     public ProductPostDto.Response getProductPostById(Long id) {
         ProductPost post = productPostRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product niet gevonden met id: " + id));
+                .orElseThrow(() -> new RecordNotFoundException("Product niet gevonden met id: " + id));
         return toResponseDto(post);
     }
 
+    @Transactional
     public ProductPostDto.Response createProductPost(ProductPostDto.Request dto) {
         ProductPost post = toEntity(dto);
+
+        // Forceer status 1 (Beschikbaar)
+        Status beschikbaarStatus = statusRepository.findById(1L)
+                .orElseThrow(() -> new RecordNotFoundException("Status 'Beschikbaar' (id: 1) niet gevonden in database."));
+        post.setStatus(beschikbaarStatus);
+
+        ProductPost savedPost = productPostRepository.save(post);
+        return toResponseDto(savedPost);
+    }
+
+    @Transactional
+    public ProductPostDto.Response reserveerProductPost(Long id) {
+        ProductPost post = productPostRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("ProductPost niet gevonden met id: " + id));
+
+        // Controleer of het product wel gereserveerd kán worden (moet momenteel status 1 hebben)
+        if (post.getStatus() == null || post.getStatus().getStatusId() != 1L) {
+            throw new IllegalStateException("ProductPost kan alleen gereserveerd worden als het de status 'Beschikbaar' (1) heeft.");
+        }
+
+        Status gereserveerdStatus = statusRepository.findById(2L)
+                .orElseThrow(() -> new RecordNotFoundException("Status 'Gereserveerd' (id: 2) niet gevonden in database."));
+        post.setStatus(gereserveerdStatus);
+
         ProductPost savedPost = productPostRepository.save(post);
         return toResponseDto(savedPost);
     }
@@ -79,24 +105,24 @@ public class ProductPostService {
         }
         if (dto.getAfbeeldingId() != null) {
             Afbeelding afbeelding = afbeeldingRepository.findById(dto.getAfbeeldingId())
-                    .orElseThrow(() -> new RuntimeException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
             existingProductPost.setAfbeelding(afbeelding);
         }
 
         // relaties
         if (dto.getPosterId() != null) {
             Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
-                    .orElseThrow(() -> new RuntimeException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
             existingProductPost.setPoster(poster);
         }
         if (dto.getCategorieId() != null) {
             Categorie categorie = categorieRepository.findById(dto.getCategorieId())
-                    .orElseThrow(() -> new RuntimeException("Categorie niet gevonden met id: " + dto.getCategorieId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Categorie niet gevonden met id: " + dto.getCategorieId()));
             existingProductPost.setCategorie(categorie);
         }
         if (dto.getStatusId() != null) {
             Status status = statusRepository.findById(dto.getStatusId())
-                    .orElseThrow(() -> new RuntimeException("Status niet gevonden met id: " + dto.getStatusId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Status niet gevonden met id: " + dto.getStatusId()));
             existingProductPost.setStatus(status);
         }
 
@@ -106,7 +132,7 @@ public class ProductPostService {
 
     public void deleteProductPost(Long id) {
         if (!productPostRepository.existsById(id)) {
-            throw new RuntimeException("ProductPost niet gevonden met id: " + id);
+            throw new RecordNotFoundException("ProductPost niet gevonden met id: " + id);
         }
         productPostRepository.deleteById(id);
     }
@@ -145,27 +171,27 @@ public class ProductPostService {
 
         // Fetch and SET poster
         Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
-                .orElseThrow(() -> new RuntimeException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
+                .orElseThrow(() -> new RecordNotFoundException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
         post.setPoster(poster);
 
         // Fetch and SET afbeelding
         if (dto.getAfbeeldingId() != null) {
             Afbeelding afbeelding = afbeeldingRepository.findById(dto.getAfbeeldingId())
-                    .orElseThrow(() -> new RuntimeException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
             post.setAfbeelding(afbeelding);
         }
 
         // Fetch and SET categorie
         if (dto.getCategorieId() != null) {
             Categorie categorie = categorieRepository.findById(dto.getCategorieId())
-                    .orElseThrow(() -> new RuntimeException("Categorie niet gevonden met id: " + dto.getCategorieId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Categorie niet gevonden met id: " + dto.getCategorieId()));
             post.setCategorie(categorie);
         }
 
         // Fetch and SET status
         if (dto.getStatusId() != null) {
             Status status = statusRepository.findById(dto.getStatusId())
-                    .orElseThrow(() -> new RuntimeException("Status niet gevonden met id: " + dto.getStatusId()));
+                    .orElseThrow(() -> new RecordNotFoundException("Status niet gevonden met id: " + dto.getStatusId()));
             post.setStatus(status);
         }
 
