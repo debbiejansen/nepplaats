@@ -49,14 +49,41 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        // Openbaar endpoint (indien gewenst)
-                        .requestMatchers("/publicInfo").permitAll()
-                        // Gebruikers-endpoints beveiligen op basis van rollen & HTTP-methodes
-                        .requestMatchers(HttpMethod.GET, "/api/gebruikers/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/gebruikers").hasAnyRole("USER", "ADMIN")
+                        // Swagger UI & OpenAPI documentatie vrijgeven
+                        .requestMatchers(
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/publicInfo"
+                        ).permitAll()
+                        // Publiekelijk toegankelijk: inzien van aanbod, categorieën en afbeeldingen
+                        .requestMatchers(HttpMethod.GET, "/api/productposts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categorieen/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/statussen/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/afbeeldingen/**").permitAll()
+
+                        // 2. Beheer van Categorieën, Statussen & Rollen: ADMIN only
+                        .requestMatchers(HttpMethod.POST, "/api/categorieen/**", "/api/statussen/**", "/api/rollen/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/categorieen/**", "/api/statussen/**", "/api/rollen/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/categorieen/**", "/api/statussen/**", "/api/rollen/**").hasRole("ADMIN")
+                        .requestMatchers("/api/rollen/**").hasRole("ADMIN")
+
+                        // 3. Gebruikersbeheer: ADMIN only
+                        .requestMatchers(HttpMethod.GET, "/api/gebruikers").hasRole("ADMIN") // Lijst van alle gebruikers
+                        .requestMatchers(HttpMethod.GET, "/api/gebruikers/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/gebruikers").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/gebruikers/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/gebruikers/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/gebruikers/**").hasRole("ADMIN")
+
+                        // 4. ProductPosts, Transacties & Afbeeldingen (Aanmaken/Bewerken/Inzien)
+                        .requestMatchers(HttpMethod.POST, "/api/afbeeldingen/upload").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/productposts/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/transacties/**").hasAnyRole("USER", "ADMIN")
+
+                        // Alle overige verzoeken moeten geauthenticeerd zijn
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
