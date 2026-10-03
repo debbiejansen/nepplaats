@@ -20,10 +20,11 @@ public class TransactieController {
         this.transactieService = transactieService;
     }
 
-    // GET: Alle transacties ophalen
+    // GET: Alle eigen transacties ophalen
     @GetMapping
-    public ResponseEntity<List<TransactieDto.Response>> getAllTransacties() {
-        return ResponseEntity.ok(transactieService.getAllTransacties());
+    public ResponseEntity<List<TransactieDto.Response>> getTransacties() {
+        List<TransactieDto.Response> transacties = transactieService.getTransactiesVoorGebruiker();
+        return ResponseEntity.ok(transacties);
     }
 
     // GET: Één transactie ophalen op basis van ID
