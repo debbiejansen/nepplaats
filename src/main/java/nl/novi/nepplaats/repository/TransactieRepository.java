@@ -9,10 +9,12 @@ import java.util.Optional;
 
 @Repository
 public interface TransactieRepository extends JpaRepository<Transactie, Long> {
-    // Derived query methods traversing entity relationships
+
     List<Transactie> findByKoper_GebruikerId(Long koperId);
 
     Optional<Transactie> findByProductPost_ProductPostId(Long productPostId);
 
     boolean existsByProductPost_ProductPostId(Long productPostId);
+
+    List<Transactie> findByKoper_KeycloakIdOrProductPost_Poster_KeycloakId(String koperKeycloakId, String verkoperKeycloakId);
 }

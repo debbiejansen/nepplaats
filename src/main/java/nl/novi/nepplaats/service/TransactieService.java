@@ -13,8 +13,11 @@ import nl.novi.nepplaats.repository.TransactieRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+
 import java.util.List;
+import java.util.ArrayList;
 
 @Service
 public class TransactieService {
@@ -98,6 +101,31 @@ public class TransactieService {
             throw new RecordNotFoundException("Transactie niet gevonden met id: " + id);
         }
         transactieRepository.deleteById(id);
+    }
+
+    public List<TransactieDto.Response> getTransactiesVoorGebruiker() {
+        // 1. Haal de ingelogde gebruiker (Jwt) op uit de SecurityContext
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String keycloakId = jwt.getSubject();
+
+        // 2. Controleer of de gebruiker de ADMIN rol heeft
+        List<String> roles = jwt.getClaimAsStringList("roles");
+        boolean isAdmin = roles != null && roles.contains("ADMIN");
+
+        List<Transactie> transacties;
+
+        // 3. Kies de query op basis van de autorisatie
+        if (isAdmin) {
+            transacties = transactieRepository.findAll();
+        } else {
+            // Een normale gebruiker ziet alleen transacties waarin hij koper of verkoper (poster) is
+            transacties = transactieRepository.findByKoper_KeycloakIdOrProductPost_Poster_KeycloakId(keycloakId, keycloakId);
+        }
+
+        // 4. Mappen van Entiteiten naar DTO Response objecten
+        return transacties.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     // Helper methode: DTO -> Entiteit

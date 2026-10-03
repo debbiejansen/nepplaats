@@ -1,13 +1,19 @@
 package nl.novi.nepplaats.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import nl.novi.nepplaats.dto.productpost.ProductPostDto;
 import nl.novi.nepplaats.exception.RecordNotFoundException;
 import nl.novi.nepplaats.model.*;
 import nl.novi.nepplaats.repository.*;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,17 +25,20 @@ public class ProductPostService {
     private final CategorieRepository categorieRepository;
     private final StatusRepository statusRepository;
     private final AfbeeldingRepository afbeeldingRepository;
+    private final GebruikerService gebruikerService;
 
     public ProductPostService(ProductPostRepository productPostRepository,
                               GebruikerRepository gebruikerRepository,
                               CategorieRepository categorieRepository,
                               StatusRepository statusRepository,
-                              AfbeeldingRepository afbeeldingRepository) {
+                              AfbeeldingRepository afbeeldingRepository,
+                              GebruikerService gebruikerService) {
         this.productPostRepository = productPostRepository;
         this.gebruikerRepository = gebruikerRepository;
         this.categorieRepository = categorieRepository;
         this.statusRepository = statusRepository;
         this.afbeeldingRepository = afbeeldingRepository;
+        this.gebruikerService = gebruikerService;
     }
 
     public List<ProductPostDto.Response> getAllProductPosts(Long categorieId, Long statusId, BigDecimal maxPrijs) {
@@ -66,6 +75,22 @@ public class ProductPostService {
         Status beschikbaarStatus = statusRepository.findById(1L)
                 .orElseThrow(() -> new RecordNotFoundException("Status 'Beschikbaar' (id: 1) niet gevonden in database."));
         post.setStatus(beschikbaarStatus);
+
+        if (dto.getAfbeeldingId() != null) {
+            Afbeelding afbeelding = afbeeldingRepository.findById(dto.getAfbeeldingId())
+                    .orElseThrow(() -> new RecordNotFoundException("Afbeelding niet gevonden met id: " + dto.getAfbeeldingId()));
+            post.setAfbeelding(afbeelding);
+        }
+        if (dto.getPosterId() != null) {
+            Gebruiker poster = gebruikerRepository.findById(dto.getPosterId())
+                    .orElseThrow(() -> new RecordNotFoundException("Gebruiker niet gevonden met id: " + dto.getPosterId()));
+            post.setPoster(poster);
+        }
+        if (dto.getCategorieId() != null) {
+            Categorie categorie = categorieRepository.findById(dto.getCategorieId())
+                    .orElseThrow(() -> new RecordNotFoundException("Categorie niet gevonden met id: " + dto.getCategorieId()));
+            post.setCategorie(categorie);
+        }
 
         ProductPost savedPost = productPostRepository.save(post);
         return toResponseDto(savedPost);
@@ -130,10 +155,34 @@ public class ProductPostService {
         return toResponseDto(updated);
     }
 
+
     public void deleteProductPost(Long id) {
-        if (!productPostRepository.existsById(id)) {
-            throw new RecordNotFoundException("ProductPost niet gevonden met id: " + id);
+        // 1. Zoek het product op
+        ProductPost post = productPostRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Advertentie niet gevonden met id: " + id));
+
+        // 2. Haal het Jwt object op uit de SecurityContext
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new IllegalStateException("Geen geldige JWT authenticatie gevonden.");
         }
+
+        // 3. Haal de database Gebruiker-entiteit op via jouw bestaande GebruikerService
+        Gebruiker ingelogdeGebruiker = gebruikerService.getOrCreateGebruikerFromJwt(jwt);
+
+        // 4. Controleer de rechten
+        boolean isEigenaar = post.getPoster() != null &&
+                post.getPoster().getGebruikerId().equals(ingelogdeGebruiker.getGebruikerId());
+
+        // Controleer of de rol ADMIN is (Rol ID 1L)
+        boolean isAdmin = ingelogdeGebruiker.getRol() != null &&
+                Long.valueOf(1L).equals(ingelogdeGebruiker.getRol().getRolId());
+
+        if (!isEigenaar && !isAdmin) {
+            throw new AccessDeniedException("Je bent niet gemachtigd om deze advertentie te verwijderen.");
+        }
+
+        // 5. Verwijderen
         productPostRepository.deleteById(id);
     }
 
